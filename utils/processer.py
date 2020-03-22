@@ -29,20 +29,19 @@ class Process:
         fFileContent = getContent(fFile)
 
         isAbnormal = False
+        isHighRisk = False
         mergeFile = Merge()
-        mainContract = mergeFile.mergeReduce(file, fFileContent, argvs)
-        #print(mainContract)
-        if mainContract == "NULLNULLNULL":
-            isAbnormal = True
-        if not isAbnormal:
+        isAbnormal, isHighRisk = mergeFile.mergeReduce(file, fFileContent, argvs)
+        print(isAbnormal, isHighRisk)
+        
+        srcProcessedPath = path + "/" + file
+        if not isAbnormal and not isHighRisk:
             #classify processible contract
             classify = Classifier()
             mFile = "merged_" + file
             mFileContent = getContent(mFile)
             isProcessible = classify.classifier(mFileContent)
-            
             print(isProcessible)
-
             srcProcessiblePath = path + "/" + mFile
             if isProcessible:
                 dstProcessiblePath = path + "/Processible/" + mFile
@@ -51,24 +50,22 @@ class Process:
                 os.remove(srcProcessiblePath)
             else:
                 os.remove(srcProcessiblePath)
-
-            srcProcessedPath = path + "/" + file
             desProcessedPath = path + "/ProcessedContracts/" + file
-            shutil.copy(srcProcessedPath, desProcessedPath)
-            print(file, " has been moved to the ProcessedContracts directory.")
-
-        else:
-            srcProcessedPath = path + "/" + file
+            noteStr = "ProcessedContracts"
+        elif not isAbnormal and isHighRisk:
+            desProcessedPath = path + "/varRepeatContracts/" + file
+            noteStr = "varRepeatContracts"
+        elif isAbnormal and not isHighRisk:
             desProcessedPath = path + "/abnormalContracts/" + file
-            shutil.copy(srcProcessedPath, desProcessedPath)
-            print(file, " has been moved to the abnormalContracts directory.")
+            noteStr = "abnormalContracts"
 
+        shutil.copy(srcProcessedPath, desProcessedPath)
+        print(file, " has been moved to the " + noteStr +" directory.")
+        
         #remove formatted contract
         formattedFile = path + "/" + fFile
-        #print(formattedFile)
         os.remove(formattedFile)
         os.remove(preFile)
-
         os.remove(srcProcessedPath)
         
 

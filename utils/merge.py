@@ -7,6 +7,7 @@ import operator
 
 from utils.modify import Modify
 from utils.infos import Infos
+from utils.varCheck import VarCheck
 from utils.replace import Replace
 from utils.slicing import Slicing
 
@@ -21,19 +22,23 @@ class Merge:
 	    
 	    fileContent = modifyF.deleteEmit(fileContent)
 	    fileContent = modifyF.deleteMulDiv(fileContent)
+	    
 	    # STEP 1 Merge
-	    
 	    getInfo = Infos()
-	    
 	    contractList, contractDict, libDict, libFunctionDict, mainContract, modDict, contractFunctionDict, contractConstructorDict = getInfo.findAllContracts(fileContent)
 	    #print(mainContract)
+	    isAbnormal = False
 	    if mainContract == "NULLNULLNULL":
-	        return mainContract
+	    	isAbnormal = True
+	    if isAbnormal:
+	    	return isAbnormal, False
+
 	    contractGraph = {}
 	    for item in contractList:
 	        contractGraph[item['contract']] = item['inherit']
 	    
 	    searchPath = getInfo.inheritChain(contractList, contractGraph)
+
 	    fileContent = modifyF.replaceSuper(searchPath, contractFunctionDict, fileContent)
 	    
 	    modSearchOrder, functionSearchOrder = getInfo.subChain(modDict, contractFunctionDict, searchPath)
@@ -42,9 +47,16 @@ class Merge:
 	    #update dict info due to delete of event statement
 	    contractList, contractDict, libDict, libFunctionDict, mainContract, modDict, contractFunctionDict, contractConstructorDict = getInfo.findAllContracts(fileContent)
 	    fileContent = modifyF.moveConstructFunc(contractFunctionDict, mainContract, fileContent)
-	    
+
 	    contractList, contractDict, libDict, libFunctionDict, mainContract, modDict, contractFunctionDict, contractConstructorDict = getInfo.findAllContracts(fileContent)
 	    statementDict, contractGlobalVar = getInfo.varStatement(contractList, contractDict, modDict, contractFunctionDict, contractConstructorDict, fileContent)
+
+	    isHighRisk = False
+	    checkVar = VarCheck()
+	    isHighRisk = checkVar.check(contractDict, contractFunctionDict, statementDict, searchPath, fileContent)
+	    if isHighRisk:
+	    	return isAbnormal, isHighRisk
+
 	    fileContent = modifyF.EPluribusUnum(modSearchOrder, functionSearchOrder, contractList, contractDict, modDict, contractFunctionDict, mainContract, contractConstructorDict, statementDict, searchPath, fileContent)
 	    
 	    #delete constructor
@@ -58,8 +70,6 @@ class Merge:
 	    fileContent = replaceF.functionReplace(contractDict, fileContent, modSearchOrder, modDict, contractFunctionDict, searchPath, contractElemLibDict, libFunctionDict)
 	    
 	    contractList, contractDict, libDict, libFunctionDict, mainContract, modDict, contractFunctionDict, contractConstructorDict = getInfo.findAllContracts(fileContent)
-	    
-	    
 	    fileContent, saveList = modifyF.saveRelContract(mainContract, contractDict, fileContent)
 	    
 	    contractList, contractDict, libDict, libFunctionDict, mainContract, modDict, contractFunctionDict, contractConstructorDict = getInfo.findAllContracts(fileContent)
@@ -79,10 +89,12 @@ class Merge:
 	    for i in reservedList:
 	        if i['line'].strip():
 	            op.write(i['line'])
+	    
 	    #for i in fileContent:
 	    #    op.write(i)
 
-	    # Close files
+	    #Close files
 	    op.close()
-	    return mainContract['contract']
+
+	    return False, False
 

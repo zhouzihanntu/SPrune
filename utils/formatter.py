@@ -290,7 +290,6 @@ class Formatter:
                 leftParenCount, rightParenCount = 0, 0
         return fileContent
 
-
     def formatLoop(self, fileContent):
         pattern4Loop = re.compile(r'((while|for)\s*\([^)]*\))')
         pattern4LoopParen = re.compile(r'((while|for)\s*\([^)]*\)\s*\{)')
@@ -528,6 +527,35 @@ class Formatter:
 
         return fileContent
 
+    def formatStruct(self, fileContent):
+        pattern4Struct = re.compile(r'\Astruct\s+(\w+)\s*\{')
+        blockStart = -1
+        blockEnd = -1
+        leftParenCount = 0
+        rightParenCount = 0
+        for idx, line in enumerate(fileContent):
+            result4Struct = pattern4Struct.findall(line.strip())
+            if blockStart == -1 and result4Struct and line.count('{') > line.count('}'):
+                blockStart = idx
+                #print(line)
+            if blockStart != -1:
+                leftParenCount = leftParenCount + line.count("{")
+                rightParenCount = rightParenCount + line.count("}")
+            if blockStart != -1 and leftParenCount == rightParenCount and leftParenCount > 0:
+                blockEnd = idx
+                if blockStart != blockEnd:
+                    string = ""
+                    for f in fileContent[blockStart:blockEnd + 1]:
+                        string = string + f.strip()
+                    firstLineStart = fileContent[blockStart].find(fileContent[blockStart].strip())
+                    string = fileContent[blockStart][0:firstLineStart] + string
+                    fileContent[blockStart] = string + "\r\n"
+                    fileContent[blockStart + 1:blockEnd + 1] = ["\r\n"] * (blockEnd - blockStart)
+                blockStart, blockEnd = -1, -1
+                leftParenCount, rightParenCount = 0, 0
+
+        return fileContent
+
     def formatter(self, filename, fileContent):
 
         fileContent = self.formatCommentAndEnum(fileContent)
@@ -565,6 +593,8 @@ class Formatter:
 
         #jsbeautifier
         fileContent = self.formatUsing(fileContent)
+
+        fileContent = self.formatStruct(fileContent)
         
         newFile = "formatted_" + filename
         op = open(newFile, "w+")

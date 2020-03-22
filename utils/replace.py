@@ -306,7 +306,7 @@ class Replace:
 	            if result4Constructor:
 	                currFunc = result4Constructor[0]
 
-	            if result4CallExternalFunction and currContract and currFunc and not result4CurrFunction:
+	            if result4CallExternalFunction and currContract and currFunc and not result4CurrFunction and not result4Contract:
 	                caller = result4CallExternalFunction[0][0].strip()
 	                if caller.count("[") > caller.count("]"):
 	                    caller = caller.split("[")[-1]
@@ -432,7 +432,7 @@ class Replace:
 	                        pass
 	            
 
-	            if result4CallFunc and not result4CallExternalFunction and not result4CurrFunction and not result4CurrModifier and currContract and currFunc and not result4ElementaryTypeName:
+	            if result4CallFunc and not result4CallExternalFunction and not result4CurrFunction and not result4CurrModifier and currContract and currFunc and not result4ElementaryTypeName and not result4Contract:
 	                #update index in contractFunctionDict
 	                #print(currContract)
 	                if result4CallFunc[0].split('(')[0] in funcDict[currContract]:
