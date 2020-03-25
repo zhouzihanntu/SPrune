@@ -73,20 +73,23 @@ class Infos:
 	        result2 = pattern2.findall(line.strip())
 	        if result:
 	            contract = result[0][0].strip()
-	            pattern4Paren = re.compile(r'\(.*?\)+')
-	            inherit = pattern4Paren.sub("", result[0][1]).split(',')
-	            #print(result[0][1])
-	            #print(inherit)
+	            pattern4Paren = re.compile(r'\([^()]*?\)+')
+	            inherit = pattern4Paren.sub("", result[0][1])
+	            while '(' in inherit and ')' in inherit:
+	            	inherit = pattern4Paren.sub("", inherit)
+	            inherit = inherit.split(',')
+	            
 	            for i, e in enumerate(inherit):
 	                inherit[i] = e.strip()
 	            item = {'contract': contract, 'inherit': inherit, 'idx': idx}
 	            contractList.append(item)
 	        elif result2:
 	            contract = result2[0][1].strip()
+	            #print(contract)
 	            inherit = ''
 	            item = {'contract': contract, 'inherit': inherit, 'idx': idx}
 	            contractList.append(item)
-	        
+	        #print(contractList)
 	        result4Library = pattern4Library.findall(line.strip())
 	        result4Contract = pattern4Contract.findall(line.strip())
 	        result4Function = pattern4Function.findall(line.strip())
